@@ -1,0 +1,48 @@
+หัวข้อ: การแก้ปัญหาคอมไม่มีไวไฟ ไอคอน Wi-Fi หาย และปุ่มไวไฟไม่ขึ้นใน Windows 11
+
+วัตถุประสงค์
+เอกสารนี้สรุปขั้นตอนแก้ปัญหาสำหรับกรณีที่คอมพิวเตอร์หรือโน้ตบุ๊กไม่มีไวไฟ (No Wi-Fi), ตัวเลือก Wi-Fi หายไปจาก Taskbar หรือ Quick Settings, สวิตช์เปิดปิด Wi-Fi เป็นสีเทา หรือ Windows 11 มองไม่เห็นการ์ดสัญญาณไวไฟ
+
+อาการที่พบบ่อย
+- คอมไม่มีไวไฟ ไม่พบไอคอน Wi-Fi ตรงมุมขวาล่างของหน้าจอ
+- ปุ่มเปิดปิด Wi-Fi หายไปจากหน้า Settings และ Quick Settings
+- ใน Settings > Network & internet ไม่มีเมนู Wi-Fi ปรากฏ มีเพียงแค่ Ethernet
+- Device Manager ขึ้นเครื่องหมายตกใจสีเหลืองที่ Wireless Network Adapter หรือการ์ด Wi-Fi หายไปจากรายการ
+- โน้ตบุ๊กไม่มีสัญญาณไวไฟหลังตื่นจาก Sleep Mode หรือหลัง Windows Update
+
+ขั้นตอนการตรวจสอบและแก้ไขปัญหา
+
+1) ตรวจสอบโหมดเครื่องบิน (Airplane Mode) และสวิตช์ทางกายภาพ
+- ตรวจสอบว่าไม่ได้เปิดโหมดเครื่องบิน (Airplane Mode) ไว้ ให้กดดูที่ Quick Settings (Windows + A)
+- โน้ตบุ๊กบางรุ่นจะมีปุ่มลัดคีย์บอร์ด (เช่น Fn + F2, Fn + F5, หรือ Fn + F12) หรือมีสวิตช์เปิดปิดสัญญาณไวไฟด้านข้างเครื่อง ให้ตรวจดูว่าไม่ได้เผลอปิดไว้
+
+2) ตรวจสอบการเปิดใช้งาน Wi-Fi Adapter ใน Network Connections
+- กดปุ่ม Windows + R พิมพ์คำสั่ง `ncpa.cpl` แล้วกด Enter
+- จะเปิดหน้าต่าง Network Connections ขึ้นมา
+- มองหาไอคอน Wi-Fi หากเป็นสีเทาและระบุว่า "Disabled" ให้คลิกขวาแล้วเลือก "Enable"
+
+3) ตรวจสอบและรีเฟรช Driver ใน Device Manager
+- คลิกขวาที่ปุ่ม Start แล้วเลือก "Device Manager"
+- ขยายหัวข้อ "Network adapters"
+- หากเห็นชื่อการ์ด Wi-Fi (เช่น Intel Wi-Fi, Realtek Wireless) แต่มีเครื่องหมายตกใจสีเหลือง ให้คลิกขวาเลือก "Update driver" หรือ "Enable device"
+- หากมองไม่เห็นการ์ด Wi-Fi เลย ให้คลิกเมนู "Action" ด้านบน แล้วเลือก "Scan for hardware changes" เพื่อให้ Windows ค้นหาอุปกรณ์ใหม่
+- หากยังมีปัญหา ให้คลิกขวาที่การ์ด Wi-Fi เลือก "Uninstall device" (ไม่ต้องติ๊กเลือกลบไฟล์ไดรเวอร์) แล้วรีสตาร์ตเครื่อง Windows จะลงไดรเวอร์พื้นฐานให้อัตโนมัติ
+
+4) ตรวจสอบบริการ WLAN AutoConfig Service
+- กด Windows + R พิมพ์ `services.msc` แล้วกด Enter
+- เลื่อนหาบริการชื่อ "WLAN AutoConfig"
+- ดับเบิลคลิกเปิดขึ้นมา ตรวจสอบว่า Startup type เป็น "Automatic" และสถานะเป็น "Running" หากไม่ได้ทำงานให้กดปุ่ม "Start"
+
+5) ใช้ Network Reset (รีเซ็ตเครือข่าย)
+- ไปที่ Settings > Network & internet > Advanced network settings
+- เลือก "Network reset" แล้วกด "Reset now"
+- เครื่องจะรีสตาร์ตภายใน 5 นาที เพื่อรีเซ็ตคอมโพเนนต์เครือข่ายทั้งหมดกลับเป็นค่าเริ่มต้น
+
+คำถามที่ระบบตอบได้
+- คอมไม่มีไวไฟต้องทำอย่างไร?
+- ไอคอน Wi-Fi หายจาก Windows 11 แก้ไขอย่างไร?
+- ปุ่มเปิด Wi-Fi หายไป มีแต่ Ethernet ทำอย่างไร?
+- การ์ดไวไฟไม่ขึ้นในคอมพิวเตอร์ ต้องตรวจ Device Manager ตรงไหน?
+
+แหล่งข้อมูล: Microsoft Support
+SOURCE_URL: https://support.microsoft.com/th-th/windows/fix-wi-fi-connection-issues-in-windows
