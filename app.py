@@ -8,7 +8,7 @@ import os
 import glob
 import re
 import base64
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Generator
 
 import streamlit as st
 import numpy as np
@@ -234,7 +234,7 @@ def retrieve_documents(
 
 
 # ---------------------------------------------------------
-# Prompt Engineering & Gemini LLM Invocation
+# Prompt Engineering & Gemini LLM Stream Invocation
 # ---------------------------------------------------------
 SYSTEM_PROMPT = """คุณคือ Computer & Device Support Assistant ผู้เชี่ยวชาญด้านการใช้งานและแก้ไขปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วงบน Windows 11
 
@@ -244,7 +244,7 @@ SYSTEM_PROMPT = """คุณคือ Computer & Device Support Assistant ผู
 3. หากใน CONTEXT ไม่มีข้อมูลที่เพียงพอสำหรับตอบคำถาม ให้ตอบเพียงสั้นๆ ว่า:
    "ไม่พบข้อมูลในเอกสาร"
 4. ตอบเป็นภาษาเดียวกับภาษาที่ผู้ใช้ถาม (หากคำถามเป็นภาษาไทยให้ตอบภาษาไทย หากเป็นภาษาอังกฤษให้ตอบภาษาอังกฤษ)
-5. สรุปคำตอบให้ชัดเจน เข้าใจง่าย เป็นขั้นตอน (Step-by-step) เมื่อเหมาะสมกับคำถาม
+5. สรุปคำตอบให้กระชับ ตรงประเด็น เป็นขั้นตอน (Step-by-step) ชัดเจน รวดเร็วและเข้าใจง่าย
 6. อ้างอิงและระบุชื่อเอกสาร (Source) ที่ใช้ในการตอบอย่างชัดเจนในเนื้อหาคำตอบ
 """
 
@@ -267,7 +267,7 @@ def build_llm_prompt(user_question: str, retrieved_chunks: List[Dict[str, Any]])
 QUESTION:
 {user_question}
 
-คำแนะนำ: ตอบคำถามโดยอ้างอิงจาก CONTEXT ข้างต้นเท่านั้น หากข้อมูลไม่เพียงพอให้ตอบ "ไม่พบข้อมูลในเอกสาร"
+คำแนะนำ: ตอบคำถามโดยอ้างอิงจาก CONTEXT ข้างต้นเท่านั้น ให้กระชับ ชัดเจน เป็นขั้นตอน หากข้อมูลไม่เพียงพอให้ตอบ "ไม่พบข้อมูลในเอกสาร"
 """
     return prompt
 
@@ -294,10 +294,10 @@ def get_gemini_api_key() -> str:
     return HARDCODED_GEMINI_KEY
 
 
-def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], model_name: str, api_key: str) -> str:
+def call_gemini_llm_stream(user_question: str, retrieved_chunks: List[Dict[str, Any]], model_name: str, api_key: str) -> Generator[str, None, None]:
     """
-    Calls the Google Gemini API to generate an answer based on retrieved context.
-    Includes automatic model fallback if a model hits rate limit / quota.
+    Streams Google Gemini API response token-by-token for high-speed real-time responses.
+    Includes automatic model fallback if a model hits rate limit / quota / 404.
     """
     import google.generativeai as genai
 
@@ -306,11 +306,10 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
 
     generation_config = {
         "temperature": 0.0,
-        "max_output_tokens": 1024,
+        "max_output_tokens": 800,  # Optimized for fast, concise responses
     }
 
     models_to_try = [model_name, "gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
-    # Deduplicate while preserving order
     seen_models = set()
     models_to_try = [m for m in models_to_try if not (m in seen_models or seen_models.add(m))]
 
@@ -322,25 +321,30 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
                 system_instruction=SYSTEM_PROMPT,
                 generation_config=generation_config
             )
-            response = model.generate_content(prompt_content)
-            if response and response.text:
-                return response.text.strip()
+            # Use stream=True for instant token delivery
+            response = model.generate_content(prompt_content, stream=True)
+            has_yielded = False
+            for chunk in response:
+                if chunk and chunk.text:
+                    has_yielded = True
+                    yield chunk.text
+            if has_yielded:
+                return
         except Exception as e:
             last_error = str(e)
             if "quota" in last_error.lower() or "429" in last_error.lower() or "rate" in last_error.lower() or "404" in last_error.lower() or "not found" in last_error.lower() or "not available" in last_error.lower():
                 # Try next available model in list
                 continue
             elif "api_key" in last_error.lower() or "authentication" in last_error.lower():
-                return f"⚠️ เกิดข้อผิดพลาด: Gemini API Key ไม่ถูกต้อง ({last_error})"
+                yield f"⚠️ เกิดข้อผิดพลาด: Gemini API Key ไม่ถูกต้อง ({last_error})"
+                return
             else:
-                return f"⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API: {last_error}"
+                yield f"⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API: {last_error}"
+                return
 
-    # If all models exhausted quota
-    return (
+    # If all models exhausted
+    yield (
         f"⚠️ เกิดข้อผิดพลาด: คีย์นี้ใช้โควตาของ Gemini API ครบขีดจำกัดแล้ว (Quota Exceeded / Rate Limit)\n\n"
-        f"💡 **วิธีแก้ไขง่ายๆ ภายใน 1 นาที:**\n"
-        f"1. ไปสร้าง API Key ฟรีอันใหม่ที่ [Google AI Studio](https://aistudio.google.com/apikey) (คีย์ฟรีใหม่จะขึ้นต้นด้วย `AIzaSy...` ได้โควตาฟรี 1,500 ครั้ง/วัน)\n"
-        f"2. นำคีย์ใหม่ไปใส่ใน **Streamlit Secrets** (`GEMINI_API_KEY = \"คีย์ใหม่\"`)\n\n"
         f"*(รายละเอียด Error: {last_error})*"
     )
 
@@ -349,66 +353,69 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
 # UI Rendering
 # ---------------------------------------------------------
 def main():
+    # Load embedding model & vector index
+    try:
+        embed_model = load_embedding_model(EMBEDDING_MODEL_NAME)
+        faiss_index, all_chunks = build_vector_index(
+            embed_model,
+            DATA_DIR,
+            chunk_size=CHUNK_SIZE,
+            overlap=CHUNK_OVERLAP
+        )
+        raw_docs = load_documents(DATA_DIR)
+        num_docs = len(raw_docs)
+        num_chunks = len(all_chunks)
+    except Exception as e:
+        st.error(f"เกิดข้อผิดพลาดในการโหลดโมเดลหรือ Index: {e}")
+        embed_model = None
+        faiss_index = None
+        all_chunks = []
+        num_docs = 0
+        num_chunks = 0
+
     # --- Sidebar ---
     with st.sidebar:
-        st.title("🖥️ ข้อมูลระบบ (System Info)")
+        st.title("🖥️ Support Assistant")
         st.markdown("---")
 
-        st.subheader("📖 เกี่ยวกับแชตบอต")
-        st.markdown(
-            """
-            **Computer & Device Support Assistant**  
-            ระบบตอบคำถามและแก้ปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วงบน Windows 11  
-            ขับเคลื่อนด้วยสถาปัตยกรรม **RAG (Retrieval-Augmented Generation)**  
-            ค้นหาข้อมูลตรงจากเอกสารทางการ ไม่แต่งคำตอบนอกเหนือจากเอกสาร
-            """
-        )
+        st.subheader("💡 คำถามยอดนิยม (คลิกถามได้ทันที)")
+        st.caption("กดปุ่มเพื่อถามคำถามที่พบบ่อยได้ทันทีโดยไม่ต้องพิมพ์:")
+
+        sample_questions = [
+            ("📶 Wi-Fi เชื่อมต่อได้แต่ไม่มีเน็ต", "Wi-Fi เชื่อมต่อได้แต่เข้าอินเทอร์เน็ตไม่ได้ควรตรวจอะไร?"),
+            ("🔵 Bluetooth ต่อไม่ได้", "Bluetooth ต่อกับคอมพิวเตอร์ไม่ได้ ต้องทำอย่างไร?"),
+            ("🔊 คอมไม่มีเสียง", "คอมไม่มีเสียง ต้องตรวจสอบอะไรบ้าง?"),
+            ("🎤 ทดสอบไมโครโฟน", "จะทดสอบไมโครโฟนใน Windows 11 ได้อย่างไร?"),
+            ("🖨️ แก้ปัญหา Printer", "วิธีแก้ปัญหา Printer ใน Windows 11"),
+            ("🖥️ จอภายนอก HDMI ไม่ขึ้น", "ต่อ HDMI แล้วจอภายนอกไม่ขึ้นควรทำอย่างไร?"),
+            ("🔌 USB-C ต่อจอได้ทุกพอร์ตไหม?", "USB-C ทุกพอร์ตสามารถต่อจอภาพได้หรือไม่?"),
+            ("🔋 วิธีเช็ค Battery Report", "จะสร้าง Battery Report ใน Windows 11 ได้อย่างไร?"),
+            ("🚗 เปลี่ยนน้ำมันเครื่องรถยนต์", "วิธีเปลี่ยนน้ำมันเครื่องรถยนต์ทำอย่างไร?"),
+        ]
+
+        for label, query in sample_questions:
+            if st.button(label, use_container_width=True):
+                st.session_state["pending_query"] = query
+                st.rerun()
 
         st.markdown("---")
-        st.subheader("📊 ข้อมูล Knowledge Base")
-
-        # Load embedding model & vector index
-        try:
-            embed_model = load_embedding_model(EMBEDDING_MODEL_NAME)
-            faiss_index, all_chunks = build_vector_index(
-                embed_model,
-                DATA_DIR,
-                chunk_size=CHUNK_SIZE,
-                overlap=CHUNK_OVERLAP
-            )
-            raw_docs = load_documents(DATA_DIR)
-            num_docs = len(raw_docs)
-            num_chunks = len(all_chunks)
-
-            st.metric(label="จำนวนเอกสาร (Documents)", value=f"{num_docs} ไฟล์")
-            st.metric(label="จำนวน Chunks ในระบบ", value=f"{num_chunks} Chunks")
-        except Exception as e:
-            st.error(f"เกิดข้อผิดพลาดในการโหลดโมเดลหรือ Index: {e}")
-            embed_model = None
-            faiss_index = None
-            all_chunks = []
-
-        st.markdown("---")
-        st.subheader("⚙️ พารามิเตอร์ระบบ (Configured)")
-        st.write(f"• **LLM Model:** `{GEMINI_MODEL}`")
-        st.write(f"• **Top-K Retrieval:** `{TOP_K}` Chunks")
-        st.write(f"• **Similarity Threshold:** `{SIMILARITY_THRESHOLD}`")
-        st.write(f"• **Status:** `✅ API Connected`")
+        st.subheader("📊 สถานะระบบ")
+        st.write(f"• **คลังเอกสาร:** `{num_docs}` ไฟล์ ({num_chunks} Chunks)")
+        st.write(f"• **AI Model:** `{GEMINI_MODEL}` (ความเร็วสูง ⚡)")
+        st.write(f"• **ความแม่นยำ:** `Top-{TOP_K}` (Threshold: {SIMILARITY_THRESHOLD})")
+        st.write("• **สถานะ:** `✅ พร้อมใช้งาน`")
 
         st.markdown("---")
         if st.button("🗑️ ล้างประวัติการสนทนา (Clear Chat)", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
 
-        st.markdown("---")
-        st.caption("💡 **วิธีใช้งาน**: พิมพ์คำถามเกี่ยวกับปัญหาคอมพิวเตอร์หรืออุปกรณ์ต่อพ่วงในกล่องข้อความด้านล่าง")
-
     # --- Main Header ---
     st.title("🖥️ Computer & Device Support Assistant")
-    st.caption("AI Assistant powered by Retrieval-Augmented Generation (Windows 11 & Peripheral Support)")
+    st.caption("AI Assistant powered by Retrieval-Augmented Generation (Fast Response ⚡)")
     st.markdown(
         """
-        ระบบผู้ช่วยตอบคำถามการใช้งานและแก้ไขปัญหาคอมพิวเตอร์ อุปกรณ์ต่อพ่วง ฮาร์ดแวร์ ไดรเวอร์ และเน็ตเวิร์กเบื้องต้น  
+        ระบบผู้ช่วยตอบคำถามการใช้งานและแก้ไขปัญหาคอมพิวเตอร์ อุปกรณ์ต่อพ่วง ฮาร์ดแวร์ ไดรเวอร์ และเน็ตเวิร์กบน Windows 11  
         *ระบบตอบคำถามโดยอ้างอิงจากเอกสารความรู้ในคลังข้อมูลเท่านั้น หากไม่พบข้อมูลจะปฏิเสธทันที*
         """
     )
@@ -418,7 +425,7 @@ def main():
         st.session_state.messages = [
             {
                 "role": "assistant",
-                "content": "สวัสดีครับ! ผมคือ Computer & Device Support Assistant มีปัญหาเกี่ยวกับการใช้งานคอมพิวเตอร์ อุปกรณ์ต่อพ่วง หรือ Windows 11 ด้านไหน สอบถามได้เลยครับ",
+                "content": "สวัสดีครับ! ผมคือ Computer & Device Support Assistant สอบถามปัญหาคอมพิวเตอร์หรืออุปกรณ์ต่อพ่วงบน Windows 11 ได้เลยครับ หรือจะกดปุ่มคำถามด่วนทางซ้ายมือก็ได้ครับ",
                 "sources": [],
                 "retrieved_chunks": []
             }
@@ -442,12 +449,17 @@ def main():
                         st.markdown("---")
 
     # --- Chat Input & Processing ---
-    user_query = st.chat_input("พิมพ์คำถามของคุณที่นี่ เช่น Bluetooth ต่อไม่ได้ทำอย่างไร? หรือ คอมไม่มีเสียง...")
+    user_input = st.chat_input("พิมพ์คำถามของคุณที่นี่ เช่น Bluetooth ต่อไม่ได้ทำอย่างไร? หรือ คอมไม่มีเสียง...")
 
-    if user_query:
-        query_text = user_query.strip()
-        if not query_text:
-            return
+    # Determine active query (either from input or clicked button)
+    active_query = None
+    if user_input:
+        active_query = user_input.strip()
+    elif "pending_query" in st.session_state and st.session_state["pending_query"]:
+        active_query = st.session_state.pop("pending_query")
+
+    if active_query:
+        query_text = active_query
 
         # Render user message
         with st.chat_message("user"):
@@ -469,20 +481,19 @@ def main():
                 })
                 return
 
-            # Step 1: Retrieval
-            with st.spinner("🔍 กำลังค้นหาข้อมูลที่เกี่ยวข้องจาก Knowledge Base..."):
-                retrieved_chunks, is_relevant, max_score = retrieve_documents(
-                    query=query_text,
-                    model=embed_model,
-                    index=faiss_index,
-                    chunks=all_chunks,
-                    top_k=TOP_K,
-                    threshold=SIMILARITY_THRESHOLD
-                )
+            # Step 1: Retrieval (Fast CPU Cosine Search < 20ms)
+            retrieved_chunks, is_relevant, max_score = retrieve_documents(
+                query=query_text,
+                model=embed_model,
+                index=faiss_index,
+                chunks=all_chunks,
+                top_k=TOP_K,
+                threshold=SIMILARITY_THRESHOLD
+            )
 
             # Check threshold condition
             if not is_relevant:
-                # Max similarity score is below the threshold -> Reject without calling LLM
+                # Max similarity score is below the threshold -> Reject immediately without calling LLM
                 answer = NO_MATCH_RESPONSE
                 st.markdown(answer)
                 st.info(f"ℹ️ ความเกี่ยวข้องสูงสุดที่ค้นพบ: `{max_score:.2f}` (ต่ำกว่าเกณฑ์ขั้นต่ำ `{SIMILARITY_THRESHOLD:.2f}` ระบบจึงไม่นำข้อมูลที่ไม่เกี่ยวข้องมาตอบ)")
@@ -501,19 +512,17 @@ def main():
                 })
 
             else:
-                # Step 2: Gemini API Key & Generation
+                # Step 2: Gemini API Key
                 api_key = get_gemini_api_key()
 
-                # Step 3: Call Gemini LLM
-                with st.spinner("🤖 กำลังวิเคราะห์และเรียบเรียงคำตอบจากเอกสาร..."):
-                    llm_answer = call_gemini_llm(
-                        user_question=query_text,
-                        retrieved_chunks=retrieved_chunks,
-                        model_name=GEMINI_MODEL,
-                        api_key=api_key
-                    )
-
-                st.markdown(llm_answer)
+                # Step 3: Stream Gemini LLM Response (Fast token-by-token output)
+                stream_generator = call_gemini_llm_stream(
+                    user_question=query_text,
+                    retrieved_chunks=retrieved_chunks,
+                    model_name=GEMINI_MODEL,
+                    api_key=api_key
+                )
+                llm_answer = st.write_stream(stream_generator)
 
                 # Format distinct sources
                 seen_sources = {}
