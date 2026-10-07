@@ -28,7 +28,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # ค่าคงที่กำหนดเองในโค้ด ไม่ต้องปรับบนหน้าเว็บ
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
 CHUNK_SIZE = 650
 CHUNK_OVERLAP = 120
 TOP_K = 4
@@ -309,7 +309,7 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
         "max_output_tokens": 1024,
     }
 
-    models_to_try = [model_name, "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"]
+    models_to_try = [model_name, "gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
     # Deduplicate while preserving order
     seen_models = set()
     models_to_try = [m for m in models_to_try if not (m in seen_models or seen_models.add(m))]
@@ -327,8 +327,8 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
                 return response.text.strip()
         except Exception as e:
             last_error = str(e)
-            if "quota" in last_error.lower() or "429" in last_error.lower() or "rate" in last_error.lower():
-                # Try next model in list
+            if "quota" in last_error.lower() or "429" in last_error.lower() or "rate" in last_error.lower() or "404" in last_error.lower() or "not found" in last_error.lower() or "not available" in last_error.lower():
+                # Try next available model in list
                 continue
             elif "api_key" in last_error.lower() or "authentication" in last_error.lower():
                 return f"⚠️ เกิดข้อผิดพลาด: Gemini API Key ไม่ถูกต้อง ({last_error})"
