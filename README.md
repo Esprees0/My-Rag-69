@@ -1,49 +1,143 @@
-# Computer & Device Support Assistant — RAG Knowledge Base
+# 🖥️ Computer & Device Support Assistant
 
-## หัวข้อ
-ระบบ RAG สำหรับตอบคำถามและแก้ไขปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วงเบื้องต้นบน Windows 11
+AI Assistant powered by Retrieval-Augmented Generation (RAG) สำหรับตอบคำถามและแก้ไขปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วงเบื้องต้นบน Windows 11 ขับเคลื่อนด้วย Google Gemini API พร้อมรองรับการ Deploy บน Streamlit Community Cloud
 
-## แนวคิดของ Domain
-สร้างคลังความรู้ที่ตอบปัญหาที่ผู้ใช้พบจริง เช่น Wi-Fi, Bluetooth, เสียง, ไมโครโฟน, Printer, จอภาพภายนอก, USB-C, Driver และพื้นที่เก็บข้อมูล โดยให้ LLM ตอบจาก Context ที่ Retriever ค้นพบเท่านั้น
+---
 
-## โครงสร้างข้อมูล
-- `data/` มีเอกสารความรู้ 12 ไฟล์
-- `test_questions.csv` มีคำถามทดสอบ 12 ข้อ รวมคำถามที่ไม่มีคำตอบในเอกสาร 2 ข้อ
-- เนื้อหาเป็นการเรียบเรียงใหม่จากเอกสารทางการของ Microsoft Support พร้อม Source URL ในแต่ละไฟล์
+## 📌 1. Project Description (คำอธิบายโครงการ)
 
-## แหล่งข้อมูล
-เอกสารหลักมาจาก Microsoft Support ได้แก่ Wi-Fi, Bluetooth, Audio, Microphone, Printer, External Monitor, USB-C, Device Manager และ Storage
+**Computer & Device Support Assistant** คือ Web Application Chatbot ที่พัฒนาด้วยสถาปัตยกรรม **Retrieval-Augmented Generation (RAG)** มีวัตถุประสงค์เพื่อช่วยผู้ใช้งานแก้ปัญหาคอมพิวเตอร์ ฮาร์ดแวร์ ไดรเวอร์ และอุปกรณ์ต่อพ่วงต่าง ๆ บนระบบปฏิบัติการ Windows 11 ได้อย่างถูกต้อง รวดเร็ว และเชื่อถือได้
 
-## แนวทาง RAG ที่แนะนำ
-1. Document Loading: โหลดไฟล์ `.txt` ทุกไฟล์จาก `data/`
-2. Cleaning: ตัดช่องว่าง/บรรทัดที่ซ้ำ และคงหัวข้อสำคัญ
-3. Chunking: แบ่งตามหัวข้อหรือย่อหน้าประมาณ 300–700 ตัวอักษร โดย overlap ราว 50–100 ตัวอักษร
-4. Embedding: ใช้ Sentence Transformers รุ่นขนาดเล็กที่รองรับข้อความไทย/อังกฤษ
-5. Retrieval: ใช้ FAISS ค้น Top-k chunks ที่ใกล้เคียงกับคำถาม
-6. Prompt: บังคับให้ตอบจาก Context เท่านั้น และตอบ `ไม่พบข้อมูลในเอกสาร` เมื่อหลักฐานไม่เพียงพอ
-7. LLM: เรียกผ่าน Groq API หรือบริการที่อาจารย์อนุญาต
-8. UI: Streamlit แสดง Chat history, คำตอบ และ Sources ทุกครั้ง
+ระบบทำงานโดยยึดหลัก **Grounded Generation**:
+- ค้นหาข้อมูลจากเอกสารทางการในคลังความรู้ (`data/`) เท่านั้น
+- **ห้าม LLM แต่งเติมคำตอบหรือใช้ความรู้ทั่วไปนอกเหนือจากเอกสาร**
+- เมื่อระบบค้นหาแล้วไม่พบข้อมูลที่เกี่ยวข้องเพียงพอ จะปฏิเสธคำถามทันทีด้วยข้อความ:  
+  **"ไม่พบข้อมูลในเอกสาร"**
+- แสดงแหล่งที่มาของเอกสาร (Source citation) และคะแนนความเกี่ยวข้อง (Relevance score) ทุกครั้ง
 
-## ตัวอย่าง Prompt
+---
+
+## ✨ 2. Key Features (คุณสมบัติเด่น)
+
+1. **Dynamic Document Loading**: โหลดเอกสาร `.txt` ทุกไฟล์ในโฟลเดอร์ `data/` รองรับ UTF-8 สามารถเพิ่มเอกสารใหม่ได้ทันทีโดยไม่ต้องแก้ไขซอร์สโค้ด
+2. **Text Cleaning & Preprocessing**: ทำความสะอาดข้อความ ปรับแก้ Whitespace และบรรทัดว่างซ้ำซ้อน โดยคงเนื้อหาทั้งภาษาไทยและภาษาอังกฤษครบถ้วน
+3. **Smart Chunking**: แบ่งท่อนข้อความแบบ Sliding Window พร้อม Context Overlap เพื่อรักษาความต่อเนื่องของบริบท และเก็บ Metadata ราย Chunk
+4. **Multilingual Sentence Embedding**: ใช้โมเดล `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` รองรับการประมวลผลภาษาไทยและอังกฤษ มีขนาดกะทัดรัด ประหยัด RAM เหมาะกับ Cloud ทรัพยากรจำกัด
+5. **FAISS Vector Search**: จัดทำดัชนีเวกเตอร์แบบ `IndexFlatIP` พร้อม Normalized Vectors เพื่อคำนวณ Cosine Similarity ได้อย่างแม่นยำและรวดเร็ว
+6. **Strict Retrieval Threshold**: กรองคำถามด้วย Similarity Threshold หากคะแนนความเกี่ยวข้องต่ำกว่าเกณฑ์ จะไม่ส่งไปยัง LLM ช่วยประหยัด Token และป้องกันการหลอนคำตอบ (Hallucination)
+7. **Prompt Engineering & Google Gemini LLM**: ออกแบบ System Prompt เข้มงวด เรียกใช้งาน LLM ผ่าน Google Gemini API (เช่น `gemini-1.5-flash`)
+8. **Interactive Streamlit UI**: หน้าจอแชตสวยงาม มีระบบเก็บประวัติการสนทนา (Chat History), แสดงแหล่งข้อมูลอ้างอิง, แสดง Chunks ที่ค้นพบใน Expander และแผงควบคุมใน Sidebar
+
+---
+
+## 🏗️ 3. RAG Pipeline Architecture
+
 ```text
-คุณคือ Computer & Device Support Assistant
-ตอบคำถามโดยใช้ CONTEXT เท่านั้น
-ห้ามสร้างข้อมูลที่ไม่มีอยู่ใน CONTEXT
-ถ้า CONTEXT ไม่มีข้อมูลที่ตอบได้ ให้ตอบว่า "ไม่พบข้อมูลในเอกสาร"
-ตอบเป็นภาษาไทยที่เข้าใจง่าย และระบุชื่อเอกสารที่ใช้เป็นแหล่งอ้างอิง
-
-CONTEXT:
-{context}
-
-QUESTION:
-{question}
+       [ เอกสารใน data/*.txt ]
+                 │
+                 ▼
+       [ Document Loading ] (UTF-8, Metadata extraction)
+                 │
+                 ▼
+       [ Text Cleaning ] (Normalize spaces & newlines)
+                 │
+                 ▼
+       [ Chunking ] (chunk_size: 650 chars, overlap: 120 chars)
+                 │
+                 ▼
+       [ Sentence Embedding ] (paraphrase-multilingual-MiniLM-L12-v2)
+                 │
+                 ▼
+       [ FAISS Vector Index ] (IndexFlatIP / Cosine Similarity)
+                 │
+   ────────────────────────────────────────────────────────
+                 │
+       [ คำถามจากผู้ใช้ (User Query) ]
+                 │
+                 ▼
+       [ Query Embedding ]
+                 │
+                 ▼
+       [ Vector Search (Top-K = 4) ]
+                 │
+                 ▼
+         { ตรวจสอบ Threshold } ── (Score < 0.35) ──► "ไม่พบข้อมูลในเอกสาร"
+                 │                                        (ไม่เรียก LLM)
+            (Score >= 0.35)
+                 │
+                 ▼
+       [ Context Injection & Strict System Prompt ]
+                 │
+                 ▼
+       [ Google Gemini API ] (gemini-1.5-flash)
+                 │
+                 ▼
+   [ คำตอบที่ถูกต้อง + แหล่งอ้างอิง (Sources) ]
 ```
 
-## คำถามสำคัญสำหรับ Demo
-- คำถามที่มีคำตอบตรงในเอกสาร
-- คำถามที่ต้องใช้หลาย Chunk
-- คำถามต่อเนื่องในแชต
-- คำถามนอก Domain เพื่อทดสอบการปฏิเสธเมื่อไม่มีข้อมูล
+---
 
-## หมายเหตุ
-ข้อมูลนี้จัดทำเพื่อการศึกษา ไม่ใช่คู่มือซ่อม Hardware เชิงลึก และควรตรวจคู่มือ/เว็บไซต์ผู้ผลิตสำหรับอุปกรณ์รุ่นเฉพาะ
+## 🎯 4. Domain & Knowledge Sources
+
+### ทำไมจึงเลือก Computer & Device Support?
+ปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วง เช่น หูฟังไม่ได้ยินเสียง, Wi-Fi หลุด, Bluetooth หาไม่เจอ, จอภายนอกไม่ติด, หรือ USB-C ไม่ชาร์จ เป็นปัญหาที่ผู้ใช้ทั่วไปพบเจอทุกวัน การค้นหาผ่าน Search Engine ทั่วไปมักเจอบทความยาวหรือขั้นตอนที่ซับซ้อนเกินไป การใช้ RAG ช่วยให้ผู้ใช้ได้รับคำตอบเป็นขั้นตอนที่สั้น ตรงจุด และเชื่อถือได้
+
+### แหล่งข้อมูลเอกสาร (Knowledge Base)
+เอกสารในโฟลเดอร์ `data/` ประกอบด้วย 12 หัวข้อหลัก เรียบเรียงจากเอกสารสนับสนุนทางเทคนิคของ **Microsoft Support** และคู่มือผู้ผลิต:
+1. `01_windows11_basic.txt`: การตรวจสอบระบบและ Windows Update
+2. `02_wifi_troubleshooting.txt`: การแก้ปัญหาเครือข่ายและ Wi-Fi
+3. `03_bluetooth.txt`: การเชื่อมต่อและแก้ปัญหา Bluetooth
+4. `04_audio.txt`: ปัญหาเสียง ลำโพง และการตั้งค่า Output Device
+5. `05_microphone_headset.txt`: ปัญหาไมโครโฟนและชุดหูฟัง
+6. `06_printer.txt`: การติดตั้งและแก้ปัญหาเครื่องพิมพ์
+7. `07_external_monitor.txt`: การต่อจอภายนอกผ่าน HDMI / DisplayPort
+8. `08_usb_usbc.txt`: ฟังก์ชันและการแก้ปัญหาพอร์ต USB และ USB-C
+9. `09_device_manager_driver.txt`: การใช้งาน Device Manager และแก้ไข Driver
+10. `10_storage_disk.txt`: การจัดการพื้นที่ฮาร์ดดิสก์และไดรฟ์ C
+11. `11_mouse_keyboard.txt`: ปัญหาเมาส์และคีย์บอร์ด
+12. `12_battery_power.txt`: การจัดการพลังงานและสร้าง Battery Report
+
+---
+
+## 📝 5. Prompt Engineering
+
+ระบบใช้ System Prompt ที่กำหนดกฎเหล็กอย่างเข้มงวด:
+
+```text
+คุณคือ Computer & Device Support Assistant ผู้เชี่ยวชาญด้านการใช้งานและแก้ไขปัญหาคอมพิวเตอร์และอุปกรณ์ต่อพ่วงบน Windows 11
+
+กฎเหล็กที่ต้องปฏิบัติตามอย่างเคร่งครัด:
+1. ตอบคำถามโดยใช้ข้อมูลจาก CONTEXT ที่ให้มาเท่านั้น
+2. ห้ามใช้ความรู้ภายนอก ห้ามแต่งเติม หรือคาดเดาขั้นตอนที่ไม่มีใน CONTEXT โดยเด็ดขาด
+3. หากใน CONTEXT ไม่มีข้อมูลที่เพียงพอสำหรับตอบคำถาม ให้ตอบเพียงสั้นๆ ว่า:
+   "ไม่พบข้อมูลในเอกสาร"
+4. ตอบเป็นภาษาเดียวกับภาษาที่ผู้ใช้ถาม (หากคำถามเป็นภาษาไทยให้ตอบภาษาไทย หากเป็นภาษาอังกฤษให้ตอบภาษาอังกฤษ)
+5. สรุปคำตอบให้ชัดเจน เข้าใจง่าย เป็นขั้นตอน (Step-by-step) เมื่อเหมาะสมกับคำถาม
+6. อ้างอิงและระบุชื่อเอกสาร (Source) ที่ใช้ในการตอบอย่างชัดเจนในเนื้อหาคำตอบ
+```
+
+---
+
+## ☁️ 6. Streamlit Community Cloud Deployment Guide (วิธี Deploy จริง)
+
+เนื่องจากระบบถูกออกแบบมาให้ Deploy บน Streamlit Community Cloud ได้โดยตรงโดยไม่ต้องติดตั้ง Python ลงในเครื่อง local:
+
+1. **นำโฟลเดอร์โปรเจกต์ขึ้น GitHub:**
+   - เข้า [github.com](https://github.com/) แล้วสร้าง Repository ใหม่ (เช่น `My-Rag-69`)
+   - อัปโหลดไฟล์: `app.py`, `requirements.txt`, `test_questions.csv`, `README.md`, `PROJECT_SUMMARY.md`, `.gitignore` และโฟลเดอร์ `data/`
+   > ⚠️ ไฟล์ `.streamlit/secrets.toml` จะไม่ถูกอัปโหลดขึ้น GitHub เพื่อความปลอดภัยของ API Key
+2. **เข้าสู่ Streamlit Community Cloud:**
+   - ไปที่ [share.streamlit.io](https://share.streamlit.io/) แล้วล็อกอินด้วย GitHub
+3. **สร้างแอปพลิเคชัน (New App):**
+   - **Repository:** เลือก Repository ของคุณ
+   - **Branch:** `main` (หรือ master)
+   - **Main file path:** `app.py`
+4. **ตั้งค่า Gemini API Key ใน Secrets:**
+   - คลิกที่ **"Advanced settings..."**
+   - ในช่อง **Secrets** ให้ระบุ:
+     ```toml
+     GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+     ```
+   - กดปุ่ม **Save**
+5. **กดปุ่ม "Deploy!":**
+   - Streamlit Cloud จะทำการติดตั้ง dependencies ทั้งหมดและรันระบบให้พร้อมใช้งานออนไลน์ทันที
