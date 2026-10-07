@@ -297,6 +297,7 @@ def get_gemini_api_key() -> str:
 def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], model_name: str, api_key: str) -> str:
     """
     Calls the Google Gemini API to generate an answer based on retrieved context.
+    Includes automatic model fallback if a model hits rate limit / quota.
     """
     import google.generativeai as genai
 
@@ -304,27 +305,44 @@ def call_gemini_llm(user_question: str, retrieved_chunks: List[Dict[str, Any]], 
     prompt_content = build_llm_prompt(user_question, retrieved_chunks)
 
     generation_config = {
-        "temperature": 0.0,  # Factual, grounded deterministic output
+        "temperature": 0.0,
         "max_output_tokens": 1024,
     }
 
-    try:
-        model = genai.GenerativeModel(
-            model_name=model_name,
-            system_instruction=SYSTEM_PROMPT,
-            generation_config=generation_config
-        )
-        response = model.generate_content(prompt_content)
-        if response and response.text:
-            return response.text.strip()
-        return NO_MATCH_RESPONSE
-    except Exception as e:
-        error_msg = str(e)
-        if "api_key" in error_msg.lower() or "authentication" in error_msg.lower() or "invalid argument" in error_msg.lower():
-            return "⚠️ เกิดข้อผิดพลาด: Gemini API Key ไม่ถูกต้องหรือยังไม่เปิดใช้งาน กรุณาตรวจสอบ API Key"
-        elif "quota" in error_msg.lower() or "rate" in error_msg.lower():
-            return "⚠️ เกิดข้อผิดพลาด: เกินขีดจำกัดการเรียกใช้งาน Gemini API (Quota/Rate limit) กรุณารอสักครู่แล้วลองใหม่"
-        return f"⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API: {error_msg}"
+    models_to_try = [model_name, "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"]
+    # Deduplicate while preserving order
+    seen_models = set()
+    models_to_try = [m for m in models_to_try if not (m in seen_models or seen_models.add(m))]
+
+    last_error = ""
+    for current_model in models_to_try:
+        try:
+            model = genai.GenerativeModel(
+                model_name=current_model,
+                system_instruction=SYSTEM_PROMPT,
+                generation_config=generation_config
+            )
+            response = model.generate_content(prompt_content)
+            if response and response.text:
+                return response.text.strip()
+        except Exception as e:
+            last_error = str(e)
+            if "quota" in last_error.lower() or "429" in last_error.lower() or "rate" in last_error.lower():
+                # Try next model in list
+                continue
+            elif "api_key" in last_error.lower() or "authentication" in last_error.lower():
+                return f"⚠️ เกิดข้อผิดพลาด: Gemini API Key ไม่ถูกต้อง ({last_error})"
+            else:
+                return f"⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Gemini API: {last_error}"
+
+    # If all models exhausted quota
+    return (
+        f"⚠️ เกิดข้อผิดพลาด: คีย์นี้ใช้โควตาของ Gemini API ครบขีดจำกัดแล้ว (Quota Exceeded / Rate Limit)\n\n"
+        f"💡 **วิธีแก้ไขง่ายๆ ภายใน 1 นาที:**\n"
+        f"1. ไปสร้าง API Key ฟรีอันใหม่ที่ [Google AI Studio](https://aistudio.google.com/apikey) (คีย์ฟรีใหม่จะขึ้นต้นด้วย `AIzaSy...` ได้โควตาฟรี 1,500 ครั้ง/วัน)\n"
+        f"2. นำคีย์ใหม่ไปใส่ใน **Streamlit Secrets** (`GEMINI_API_KEY = \"คีย์ใหม่\"`)\n\n"
+        f"*(รายละเอียด Error: {last_error})*"
+    )
 
 
 # ---------------------------------------------------------
