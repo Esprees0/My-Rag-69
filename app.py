@@ -36,7 +36,7 @@ SIMILARITY_THRESHOLD = 0.35
 NO_MATCH_RESPONSE = "ไม่พบข้อมูลในเอกสาร"
 
 # Gemini API Key ฝังในโค้ดโดยตรง พร้อมเชื่อมต่ออัตโนมัติ
-_DEFAULT_KEY_ENCODED = "QVEuQWI4Uk42S0hWQkFkbDVQSUlGRVozYTM1akZTQUMxUlhVNEczN1BoTWliT3Z0NTVobGc="
+_DEFAULT_KEY_ENCODED = "QVEuQWI4Uk42SWNjZmdpWG9fWGh0cTNEaEc4MWlRLUIxYzlUY085bXpDc1pYRDlUb3M5THc="
 HARDCODED_GEMINI_KEY = base64.b64decode(_DEFAULT_KEY_ENCODED).decode("utf-8")
 
 # ---------------------------------------------------------
