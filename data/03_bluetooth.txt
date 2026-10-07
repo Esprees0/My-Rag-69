@@ -1,0 +1,34 @@
+หัวข้อ: การแก้ปัญหา Bluetooth ใน Windows 11
+
+อาการที่พบบ่อย
+- เปิด Bluetooth ไม่ได้
+- ไม่พบอุปกรณ์ที่ต้องการจับคู่
+- จับคู่ไม่สำเร็จ
+- เชื่อมต่อแล้วหลุด
+- Bluetooth หายจาก Settings หรือมีปุ่มเป็นสีเทา
+
+ขั้นตอนตรวจสอบ
+1) เปิด Settings > Bluetooth & devices และตรวจสอบว่า Bluetooth เปิดอยู่
+2) ทำให้อุปกรณ์ปลายทางอยู่ใน Pairing Mode
+3) วางอุปกรณ์ให้อยู่ใกล้คอมพิวเตอร์และตรวจสอบแบตเตอรี่
+4) หากอุปกรณ์เคยจับคู่แล้ว ให้ Remove device แล้ว Pair ใหม่
+5) ปิด Bluetooth รอสักครู่แล้วเปิดใหม่
+6) รีสตาร์ตคอมพิวเตอร์
+7) ตรวจสอบ Windows Update และ Driver ที่เกี่ยวข้อง
+
+กรณี Bluetooth หายจากระบบ
+หากไอคอนหรือสวิตช์ Bluetooth หายหรือเป็นสีเทา ปัญหาอาจเกี่ยวข้องกับ Hardware, Driver หรือ Firmware ของผู้ผลิต ควรตรวจ Device Manager และค้นหา Driver ที่ถูกต้องจากผู้ผลิตเครื่องก่อนดำเนินการขั้นสูง
+
+กรณีใช้หูฟัง Bluetooth แล้วไม่มีเสียง
+หลังจากเชื่อมต่อแล้ว ให้เข้า Settings > System > Sound และเลือกหูฟังเป็น Output Device หากต้องใช้ไมโครโฟน ให้ตรวจ Input Device เพิ่มเติม และตรวจระดับเสียงของทั้ง Windows และอุปกรณ์
+
+ข้อควรระวัง
+อุปกรณ์บางชนิดไม่มี Bluetooth หรืออาจรองรับเฉพาะโปรไฟล์บางประเภท ดังนั้นควรตรวจสอบความเข้ากันได้ของอุปกรณ์ก่อนแก้ปัญหา
+
+คำถามที่ระบบตอบได้
+- Bluetooth ไม่เห็นอุปกรณ์ทำอย่างไร?
+- Bluetooth หายจาก Windows ต้องทำอย่างไร?
+- ต่อหูฟัง Bluetooth ได้แต่ไม่มีเสียงทำอย่างไร?
+
+แหล่งข้อมูล: Microsoft Support
+SOURCE_URL: https://support.microsoft.com/th-th/windows/hardware/bluetooth/troubleshoot-bluetooth-not-connecting-in-windows

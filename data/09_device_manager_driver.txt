@@ -1,0 +1,31 @@
+หัวข้อ: Device Manager และการตรวจสอบ Driver ใน Windows 11
+
+Device Manager คืออะไร
+Device Manager เป็นเครื่องมือของ Windows สำหรับดูอุปกรณ์ Hardware ที่ระบบตรวจพบ และช่วยตรวจสอบสถานะของ Driver หากอุปกรณ์มีปัญหา อาจเห็นสัญลักษณ์เตือนหรือข้อความ Error Code
+
+เมื่อใดควรเปิด Device Manager
+- Wi-Fi, Bluetooth, Sound หรืออุปกรณ์อื่นหายจากระบบ
+- อุปกรณ์ทำงานผิดปกติหลังติดตั้ง Driver
+- ต้องการดูว่า Windows ตรวจพบอุปกรณ์หรือไม่
+- มีรหัสข้อผิดพลาดของอุปกรณ์
+
+แนวทางตรวจสอบ
+1) เปิด Device Manager
+2) ขยายหมวดของอุปกรณ์ที่มีปัญหา
+3) ตรวจชื่ออุปกรณ์และสัญลักษณ์เตือน
+4) เปิด Properties เพื่อดู Device Status และ Error Code
+5) จด Error Code ก่อนเปลี่ยนแปลงค่าใด ๆ
+
+การแก้ปัญหาที่ควรเริ่มจากง่ายไปยาก
+เริ่มจาก Restart และ Windows Update จากนั้นตรวจ Driver ที่ถูกต้องจากผู้ผลิต หากเกิดหลังอัปเดต อาจพิจารณา Roll Back Driver ตามความเหมาะสม ส่วนการ Uninstall Device ควรทำเมื่อทราบว่าระบบจะติดตั้ง Driver ใหม่หรือมีไฟล์ Driver ที่เหมาะสมรองรับ
+
+แนวคิดเรื่อง Error Code
+Device Manager มีรหัสที่ช่วยบอกประเภทปัญหา เช่น อุปกรณ์เริ่มทำงานไม่ได้ Driver มีปัญหา หรือ Windows ไม่สามารถเข้าถึงอุปกรณ์ในสถานะที่ต้องการ การนำรหัสไปค้นหาเอกสารอย่างเป็นทางการจะช่วยให้แก้ปัญหาได้ตรงจุดกว่าการเดา
+
+คำถามที่ระบบตอบได้
+- Device Manager ใช้ทำอะไร?
+- จะดู Error Code ของ Driver ได้ที่ไหน?
+- เมื่อ Wi-Fi Adapter มีเครื่องหมายเตือนควรตรวจอะไร?
+
+แหล่งข้อมูล: Microsoft Support
+SOURCE_URL: https://support.microsoft.com/th-th/windows/hardware/drivers/error-codes-in-device-manager-in-windows

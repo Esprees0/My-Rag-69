@@ -1,0 +1,15 @@
+﻿question,expected_answer,source
+Windows 11 ตรวจสอบ Windows Update ได้จากที่ไหน?,ไปที่ Settings > Windows Update แล้วเลือก Check for updates,01_windows11_basic.txt
+Wi-Fi เชื่อมต่อได้แต่เข้าอินเทอร์เน็ตไม่ได้ควรตรวจอะไร?,ควรแยกตรวจการเชื่อมต่อระหว่างคอมพิวเตอร์กับ Router และการเชื่อมต่อจาก Router ไปยังอินเทอร์เน็ต รวมถึงตรวจ Adapter/Driver เมื่อปัญหาเกิดเฉพาะเครื่อง,02_wifi_troubleshooting.txt
+Bluetooth ไม่พบอุปกรณ์ต้องทำอย่างไร?,ตรวจว่า Bluetooth เปิดอยู่ อุปกรณ์อยู่ใน Pairing Mode อยู่ใกล้เครื่องและมีแบตเตอรี่ จากนั้นลองจับคู่ใหม่หรือรีสตาร์ต,03_bluetooth.txt
+คอมพิวเตอร์ไม่มีเสียงต้องตรวจอะไรเป็นอันดับต้น ๆ?,ตรวจว่าไม่ได้ปิดเสียงและเลือก Output Device ถูกต้องใน Settings > System > Sound,04_audio.txt
+จะทดสอบไมโครโฟนใน Windows 11 ได้อย่างไร?,ไปที่ Settings > System > Sound เลือกไมโครโฟนในส่วน Input แล้วใช้การทดสอบไมโครโฟนเพื่อบันทึกและเล่นตัวอย่างเสียง,05_microphone_headset.txt
+Windows หาเครื่องพิมพ์ไม่เจอควรเริ่มจากอะไร?,ตรวจการเชื่อมต่อและเปิดเครื่องพิมพ์ จากนั้นตรวจ Settings > Bluetooth & devices > Printers & scanners และลอง Add device,06_printer.txt
+ต่อ HDMI แล้วจอภายนอกไม่ขึ้นควรทำอย่างไร?,ตรวจสายและ Input Source ของจอ กด Windows + P ตรวจโหมดการแสดงผล และลองพอร์ตหรือสายอื่น,07_external_monitor.txt
+USB-C ทุกพอร์ตสามารถต่อจอภาพได้หรือไม่?,ไม่ทุกพอร์ต ความสามารถของ USB-C ขึ้นกับพอร์ตของเครื่องและมาตรฐานที่ผู้ผลิตรองรับ ต้องตรวจว่าพอร์ตรองรับ Display Output หรือไม่,08_usb_usbc.txt
+Device Manager ใช้ทำอะไร?,ใช้ดูอุปกรณ์ Hardware ที่ Windows ตรวจพบและตรวจสอบสถานะหรือ Error Code ของ Driver,09_device_manager_driver.txt
+จะเพิ่มพื้นที่ไดรฟ์ C ใน Windows 11 ได้อย่างไร?,ตรวจพื้นที่ผ่าน This PC แล้วลบไฟล์ชั่วคราว ไฟล์ที่ไม่จำเป็น ล้าง Recycle Bin ย้ายไฟล์ขนาดใหญ่ และใช้ Storage Sense ตามความเหมาะสม,10_storage_disk.txt
+วิธีติดตั้งโปรแกรมตัดต่อ Adobe Premiere Pro แบบละเอียดมีอะไรบ้าง?,ไม่พบข้อมูลในเอกสาร,NO_MATCH
+วิธีเปลี่ยนน้ำมันเครื่องรถยนต์ทำอย่างไร?,ไม่พบข้อมูลในเอกสาร,NO_MATCH
+เมาส์ USB ไม่ทำงานควรตรวจอะไร?,ตรวจสายและพอร์ต ลองถอดเสียบใหม่ ทดลองพอร์ตอื่น และลองอุปกรณ์กับคอมพิวเตอร์อีกเครื่องเพื่อแยกปัญหา Hardware,11_mouse_keyboard.txt
+จะสร้าง Battery Report ใน Windows 11 ได้อย่างไร?,เปิด Command Prompt ด้วยสิทธิ์ที่เหมาะสม แล้วใช้คำสั่ง powercfg /batteryreport จากนั้นเปิดไฟล์ HTML ที่ระบบสร้าง,12_battery_power.txt
