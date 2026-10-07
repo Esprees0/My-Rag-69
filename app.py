@@ -27,9 +27,9 @@ st.set_page_config(
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-# ค่าคงที่กำหนดเองในโค้ด ใช้ Groq LPU ความเร็วสูง (llama-3.1-8b-instant เร็วที่สุดและโควตาสูงสุด)
-GROQ_MODEL = "llama-3.1-8b-instant"
-FALLBACK_GROQ_MODEL = "llama-3.3-70b-versatile"
+# ค่าคงที่กำหนดเองในโค้ด ใช้ Groq LPU ความเร็วสูง (โมเดลที่ Active บน Groq: openai/gpt-oss-120b และ qwen/qwen3.8-27b)
+GROQ_MODEL = "openai/gpt-oss-120b"
+FALLBACK_GROQ_MODEL = "qwen/qwen3.8-27b"
 CHUNK_SIZE = 650
 CHUNK_OVERLAP = 120
 TOP_K = 4
@@ -310,7 +310,7 @@ def call_groq_llm_stream(user_question: str, retrieved_chunks: List[Dict[str, An
         {"role": "user", "content": prompt_content}
     ]
 
-    models_to_try = [model_name, "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it"]
+    models_to_try = [model_name, "openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
     seen_models = set()
     models_to_try = [m for m in models_to_try if not (m in seen_models or seen_models.add(m))]
 
