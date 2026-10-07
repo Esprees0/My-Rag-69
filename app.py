@@ -27,9 +27,9 @@ st.set_page_config(
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-# ค่าคงที่กำหนดเองในโค้ด ใช้ Groq LPU ความเร็วสูง
-GROQ_MODEL = "llama-3.3-70b-versatile"
-FALLBACK_GROQ_MODEL = "llama-3.1-8b-instant"
+# ค่าคงที่กำหนดเองในโค้ด ใช้ Groq LPU ความเร็วสูง (llama-3.1-8b-instant เร็วที่สุดและโควตาสูงสุด)
+GROQ_MODEL = "llama-3.1-8b-instant"
+FALLBACK_GROQ_MODEL = "llama-3.3-70b-versatile"
 CHUNK_SIZE = 650
 CHUNK_OVERLAP = 120
 TOP_K = 4
@@ -310,7 +310,7 @@ def call_groq_llm_stream(user_question: str, retrieved_chunks: List[Dict[str, An
         {"role": "user", "content": prompt_content}
     ]
 
-    models_to_try = [model_name, FALLBACK_GROQ_MODEL, "mixtral-8x7b-32768"]
+    models_to_try = [model_name, "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it"]
     seen_models = set()
     models_to_try = [m for m in models_to_try if not (m in seen_models or seen_models.add(m))]
 
@@ -334,7 +334,7 @@ def call_groq_llm_stream(user_question: str, retrieved_chunks: List[Dict[str, An
                 return
         except Exception as e:
             last_error = str(e)
-            if "rate_limit" in last_error.lower() or "429" in last_error.lower() or "model_not_found" in last_error.lower():
+            if any(err_keyword in last_error.lower() for err_keyword in ["rate_limit", "429", "model_not_found", "decommissioned", "not supported", "404", "400"]):
                 continue
             elif "api_key" in last_error.lower() or "authentication" in last_error.lower():
                 yield f"⚠️ เกิดข้อผิดพลาด: Groq API Key ไม่ถูกต้อง ({last_error})"
